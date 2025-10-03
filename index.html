@@ -1,0 +1,2201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Earth Sky Team</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Earth Sky Team - NASA Space Apps Challenge">
+  <meta name="keywords" content="NASA, Earth Observation, Remote Sensing, Climate Change, Disaster Management">
+  <meta name="author" content="Earth Sky Team">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://threejs.org/build/three.js"></script>
+  <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: "Orbitron", "Segoe UI", Arial, sans-serif;
+      color: white;
+      overflow: hidden;
+      min-height: 100vh;
+      text-align: center;
+
+      /* Dark Pepsi Gradient */
+      background: linear-gradient(-45deg, #001f3f, #002b55, #4b0000, #0d0d0d);
+      background-size: 400% 400%;
+      animation: gradientBG 18s ease infinite;
+    }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* ====== Stars ====== */
+    .stars {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: transparent url('https://www.transparenttextures.com/patterns/stardust.png') repeat;
+      animation: moveStars 180s linear infinite;
+      z-index: -1;
+      opacity: 0.9;
+    }
+    @keyframes moveStars {
+      from { transform: translateY(0); }
+      to { transform: translateY(-1000px); }
+    }
+
+    /* ====== Meteors with Fire Tail ====== */
+    .meteor {
+      position: absolute;
+      width: 8px; height: 8px;
+      background: radial-gradient(circle, #fff, #ff4500);
+      border-radius: 50%;
+      box-shadow: 0 0 20px #ff3300, 0 0 50px #ff6600;
+      opacity: 0;
+    }
+    .meteor::after {
+      content: "";
+      position: absolute;
+      width: 180px;
+      height: 4px;
+      background: linear-gradient(to right, rgba(255, 200, 0, 0.9), rgba(255, 69, 0, 0.6), transparent);
+      top: 2px;
+      left: -180px;
+      filter: blur(2px);
+    }
+
+    /* اتجاهات مختلفة */
+    .fall-down { top: -60px; left: 25%; animation: fallDown 7s linear infinite 2s; }
+    .fall-left { top: 40%; left: 110%; animation: fallLeft 9s linear infinite 4s; }
+    .fall-right { top: 70%; left: -60px; animation: fallRight 8s linear infinite 6s; }
+    .diagonal { top: -100px; left: 85%; animation: diagonalFall 10s linear infinite 8s; }
+
+    @keyframes fallDown { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(120vh); opacity: 0; } }
+    @keyframes fallLeft { 0% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(-130vw); opacity: 0; } }
+    @keyframes fallRight { 0% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(130vw); opacity: 0; } }
+    @keyframes diagonalFall { 0% { transform: translate(0,0); opacity: 1; } 100% { transform: translate(-130vw,130vh); opacity: 0; } }
+
+    /* ====== Floating Fireballs (Planets/Orbs) ====== */
+    .bubble {
+      position: absolute;
+      bottom: -150px;
+      border-radius: 50%;
+      animation: rise 22s infinite ease-in;
+      filter: blur(1px);
+    }
+    .bubble:nth-child(1) { width: 40px; height: 40px; left: 20%; background: rgba(0,100,255,0.6); animation-duration: 20s; }
+    .bubble:nth-child(2) { width: 30px; height: 30px; left: 55%; background: rgba(200,0,50,0.7); animation-duration: 26s; }
+    .bubble:nth-child(3) { width: 70px; height: 70px; left: 75%; background: rgba(255,140,0,0.6); animation-duration: 24s; }
+
+    @keyframes rise {
+      0% { transform: translateY(0) scale(0.7); opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { transform: translateY(-130vh) scale(1.2); opacity: 0; }
+    }
+
+    /* Title */
+    h1 {
+      margin-top: 60px;
+      font-size: 2.8rem;
+      text-shadow: 0 0 25px #000, 0 0 40px #002b55;
+    }
+    p { margin: 15px 0 40px; font-size: 18px; }
+
+   .team-members {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: nowrap;
+      margin-top: 50px;
+      padding: 20px;
+    }
+    .team-member {
+      text-align: center;
+      max-width: 280px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 20px;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+      perspective: 1000px;
+    }
+    .team-member:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+    }
+    .team-member:hover .member-avatar {
+      filter: brightness(1.2);
+    }
+    .team-member:hover .member-role {
+      transform: rotateY(360deg);
+    }
+    .member-avatar {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 20px;
+      border: 4px solid #ffffff;
+      box-shadow: 0 0 15px #ff6b6b, 0 0 30px #ff6b6b;
+      transition: filter 0.3s;
+    }
+    .member-name {
+      font-weight: bold;
+      font-size: 20px;
+      margin-bottom: 8px;
+      color: white;
+    }
+    .member-role {
+      color: #ff6b6b;
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 16px;
+      transition: transform 0.5s;
+    }
+    .member-username {
+      color: #d1d1d1;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .member-country {
+      color: #f0f0f0;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    .member-social {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 10px;
+    }
+    .member-social a {
+      color: white;
+      font-size: 20px;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .member-social a:hover {
+      color: #ff6b6b;
+    }
+    .member-avatar {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 20px;
+      border: 4px solid #ffffff;
+      box-shadow: 0 0 15px #ff6b6b, 0 0 30px #ff6b6b;
+      transition: filter 0.3s;
+    }
+    .member-name {
+      font-weight: bold;
+      font-size: 20px;
+      margin-bottom: 8px;
+      color: white;
+    }
+    .member-role {
+      color: #ff6b6b;
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 16px;
+      transition: transform 0.5s;
+    }
+    .member-username {
+      color: #d1d1d1;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .member-country {
+      color: #f0f0f0;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    .member-social {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 10px;
+    }
+    .member-social a {
+      color: white;
+      font-size: 20px;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .member-social a:hover {
+      color: #ff6b6b;
+    }
+
+    /* Projects Grid Styles */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      margin-top: 50px;
+      padding: 0 20px;
+    }
+    .project-item {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 15px;
+      padding: 30px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    .project-item:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    .project-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+      color: white;
+    }
+    .project-title {
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .project-description {
+      color: rgba(255,255,255,0.8);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    /* Modal Styles */
+    .project-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.5s ease;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow: hidden;
+      position: relative;
+      animation: slideUp 0.5s ease;
+    }
+    .modal-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+    .modal-title {
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      margin: 0;
+    }
+    .close-modal {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 30px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    .close-modal:hover {
+      transform: scale(1.2);
+    }
+    .modal-body {
+      padding: 40px;
+      text-align: center;
+    }
+    .earth-engine-link {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px 30px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: bold;
+      margin-top: 20px;
+      transition: all 0.3s ease;
+    }
+    .earth-engine-link:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Navigation between projects */
+    .modal-nav {
+      display: flex;
+      justify-content: space-between;
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      transform: translateY(-50%);
+      padding: 0 20px;
+    }
+    .nav-btn {
+      background: rgba(255,255,255,0.9);
+      border: none;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .nav-btn:hover {
+      background: white;
+      transform: scale(1.1);
+    }
+
+    /* Enhanced page flip animations */
+    .perspective.effect-rotate-left .container {
+      transition: transform 0.8s ease-in-out;
+    }
+    .l-section {
+      transition: opacity 0.5s ease, transform 0.8s ease;
+    }
+    .l-section:not(.section--is-active) {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    .l-section.section--is-active {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .about--banner, .intro--banner, .contact--lockup, .work-request {
+      animation: fadeInSlide 1s ease-out;
+    }
+    @keyframes fadeInSlide {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Ensure all text is white and clear */
+    h1, h2, h3, p, a, li, span, label, input {
+      color: white !important;
+      text-shadow: 0 0 5px rgba(0,0,0,0.5); /* For better readability */
+    }
+    .header--logo p, .side-nav span, .intro--options h3, .intro--options p, .about--options h2, .team-member * {
+      color: white !important;
+    }
+    .member-role {
+      color: #ff6b6b !important; /* Adjusted for visibility */
+    }
+    .member-username {
+      color: #d1d1d1 !important;
+    }
+    .member-country {
+      color: #f0f0f0 !important;
+    }
+    .modal-content {
+      background: rgba(0, 0, 0, 0.7); /* Semi-transparent for space feel */
+    }
+    .modal-body p {
+      color: white !important;
+    }
+
+    /* Improved About Section Styles */
+    .about {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+    .about--banner {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .about--banner h2 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+    .about--banner a {
+      color: #ff6b6b;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .about--banner img {
+      max-width: 300px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+    .team-section {
+      width: 100%;
+      max-width: 1200px;
+    }
+    .team-section h2 {
+      font-size: 2rem;
+      margin-bottom: 40px;
+      text-shadow: 0 0 10px #ffffff;
+    }
+
+    /* Contact Map Styles */
+    .contact-map {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+    .contact--lockup {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .modal--information, .modal--options {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    /* Globe Container */
+    #globe-container {
+      width: 100%;
+      height: 400px;
+      margin: 20px auto;
+    }
+
+    /* Particles Container */
+    #particles-js {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+    }
+
+    /* Parallax Effects */
+    .intro--banner {
+      position: relative;
+      background-attachment: fixed;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+    }
+
+    .intro--options a {
+      transition: transform 0.5s ease;
+    }
+
+    .intro--options a:hover {
+      transform: translateY(-5px);
+    }
+
+    /* Rocket Navigation */
+    #rocket {
+      position: absolute;
+      left: -30px;
+      top: 0;
+      font-size: 20px;
+      transition: top 0.5s ease;
+      z-index: 10;
+    }
+    .side-nav li {
+      position: relative;
+    }
+
+    /* Chatbot Styles */
+    #chatbot-icon {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      background: linear-gradient(135deg, #001f4d, #b30000);
+      color: #fff;
+      border-radius: 50%;
+      width: 70px;
+      height: 70px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 32px;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      z-index: 9999;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    #chatbot-icon:hover {
+      transform: scale(1.15);
+      box-shadow: 0 0 30px #00eaff, 0 0 50px #ff003c;
+    }
+
+    #chatbot-window {
+      position: fixed;
+      bottom: 110px;
+      right: 25px;
+      width: 380px;
+      max-height: 520px;
+      background: #0a0f1f;
+      border: 2px solid #00eaff;
+      border-radius: 14px;
+      display: none;
+      flex-direction: column;
+      box-shadow: 0 0 25px #00eaff, 0 0 50px #ff003c;
+      overflow: hidden;
+      z-index: 10000;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    #chatbot-header {
+      background: linear-gradient(90deg, #001f4d, #003366);
+      color: #fff;
+      padding: 12px;
+      font-weight: bold;
+      font-size: 16px;
+      text-align: center;
+      border-bottom: 1px solid #00eaff;
+      position: relative;
+      letter-spacing: 1px;
+    }
+    #close-bot {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    #chatbot-messages {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      font-size: 15px;
+      color: #fff;
+      background: rgba(10, 15, 31, 0.95);
+    }
+    #chatbot-messages div {
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      max-width: 80%;
+      word-wrap: break-word;
+      line-height: 1.4;
+    }
+    .bot {
+      background: rgba(0, 234, 255, 0.15);
+      border-left: 3px solid #00eaff;
+      text-align: left;
+    }
+    .user {
+      background: rgba(255, 0, 60, 0.15);
+      border-right: 3px solid #ff003c;
+      text-align: right;
+      margin-left: auto;
+    }
+
+    #chatbot-input {
+      border: none;
+      padding: 14px;
+      width: 100%;
+      outline: none;
+      font-size: 15px;
+      background: #111;
+      color: #fff;
+      border-top: 1px solid #00eaff;
+    }
+
+ 
+    #planet {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 80px;
+    }
+
+    #rocket {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 40px;
+    }
+
+    .meteor, .powerup, .star {
+      position: absolute;
+      top: -40px;
+      font-size: 32px;
+    }
+    .meteor { color: #ff4500; }
+    .powerup { color: #00ffea; }
+    .star { color: #ffd700; }
+
+    #hud {
+      text-align: center;
+      font-size: 20px;
+      margin-top: 10px;
+    }
+
+    #restart {
+      display: none;
+      margin: 15px auto;
+      padding: 10px 20px;
+      font-size: 18px;
+      background: #003366;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #restart:hover { background: #0055aa; }
+
+    /* 🎁 Reward form */
+    #reward-form {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+      background: rgba(0,0,0,0.8);
+      padding: 20px;
+      border-radius: 12px;
+      border: 2px solid #ffd700;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #reward-form input {
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      margin: 10px;
+      width: 80%;
+    }
+    #reward-form button {
+      padding: 10px 20px;
+      background: #d61c29;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #reward-form button:hover { background: #ff3333; }
+  </style>
+</head>
+<body>
+  
+  <!-- Particles -->
+  <div id="particles-js"></div>
+
+  <!-- Stars -->
+  <div class="stars"></div>
+
+  <!-- Meteors -->
+  <div class="meteor fall-down"></div>
+  <div class="meteor fall-left"></div>
+  <div class="meteor fall-right"></div>
+  <div class="meteor diagonal"></div>
+
+  <!-- Fireballs / Floating Orbs -->
+  <div class="bubble"></div>
+  <div class="bubble"></div>
+  <div class="bubble"></div>
+
+<!-- notification for small viewports and landscape oriented smartphones -->
+<div class="device-notification">
+  <a class="device-notification--logo" href="#0">
+    <img src="logo.png" alt="Earth Sky">
+    <p>Earth Sky</p>
+  </a>
+  <p class="device-notification--message">Earth Sky has so much to offer that we must request you orient your device to portrait or find a larger screen. You won't be disappointed.</p>
+</div>
+
+<div class="perspective effect-rotate-left">
+  <div class="container"><div class="outer-nav--return"></div>
+    <div id="viewport" class="l-viewport">
+      <div class="l-wrapper">
+        <header class="header">
+          <a class="header--logo" href="#0">
+            <img src="logo.png" alt="Earth Sky">
+            <p>Earth Sky</p>
+          </a>
+          <button class="cta">Contact Us</button>
+          <div class="header--nav-toggle">
+            <span></span>
+          </div>
+        </header>
+        <nav class="l-side-nav">
+          <ul class="side-nav">
+            <li class="is-active"><span>Home</span></li>
+            <li><span>Projects</span></li>
+            <li><span>About</span></li>
+            <li><span>Contact</span></li>
+            <li><span>Join Us</span></li>
+          </ul>
+        </nav>
+<ul class="l-main-content main-content">
+          <li class="l-section section section--is-active">
+            <div class="intro">
+              <div class="intro--banner">
+                    <h1>Earth Sky Team <img src="teamlogo.png"  style="width: 200px; height: auto; vertical-align: middle; margin-left: 20px; border-radius: 10px; box-shadow: 1 01 15px rgba(0,234,255,0.8);"></h1>
+                <button class="cta">Join Our Mission
+                  <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 150 118" style="enable-background:new 0 0 150 118;" xml:space="preserve">
+                  <g transform="translate(0.000000,118.000000) scale(0.100000,-0.100000)">
+                    <path d="M870,1167c-34-17-55-57-46-90c3-15,81-100,194-211l187-185l-565-1c-431,0-571-3-590-13c-55-28-64-94-18-137c21-20,33-20,597-20h575l-192-193C800,103,794,94,849,39c20-20,39-29,61-29c28,0,63,30,298,262c147,144,272,271,279,282c30,51,23,60-219,304C947,1180,926,1196,870,1167z"/>
+                  </g>
+                  </svg>
+                  <span class="btn-background"></span>
+                </button>
+                <div id="globe-container"></div>
+                <img src="Terra_spacecraft_model.png" alt="Earth Observation">
+              </div>
+              <div class="intro--options">
+                <a href="#0">
+                  <h3>Climate Monitoring</h3>
+                  <p>Advanced satellite data analysis for climate change research and environmental protection.</p>
+                </a>
+                <a href="#0">
+                  <h3>Disaster Management</h3>
+                  <p>Real-time Earth observation for disaster prediction and management solutions.</p>
+                </a>
+                <a href="#0">
+                  <h3>NASA Collaboration</h3>
+                  <p>Working with NASA satellite imagery to solve global environmental challenges.</p>
+                </a>
+              </div>
+            </div>
+<li class="l-section section">
+  <div class="work">
+    <h2 class="apps-title">Our Applications</h2>
+
+<div class="apps-container">
+      <!-- الكرة المركزية (الأرض) -->
+      <div class="central-orb">
+        <img src="https://t4.ftcdn.net/jpg/05/37/79/63/360_F_537796317_P1aHevXYiL5TQMRw4UrDgX9gVDOmQknp.jpg" alt="Earth" class="earth-icon">
+      </div>
+
+<!-- Project Items -->
+<div class="project-item" onclick="openProject(0)">
+  <div class="icon-circle">
+    <img src="img/icons/1 (1).png" alt="California Wildfires" class="custom-icon">
+  </div>
+  <h3 class="project-title">California Wildfires</h3>
+</div>
+
+<div class="project-item" onclick="openProject(1)">
+  <div class="icon-circle">
+    <img src="img/icons/1 (2).png" alt="Amazon Deforestation App" class="custom-icon">
+  </div>
+  <h3 class="project-title">Amazon Deforestation</h3>
+</div>
+
+<div class="project-item" onclick="openProject(2)">
+  <div class="icon-circle">
+    <img src="img/icons/1 (3).png" alt="European Heat Waves" class="custom-icon">
+  </div>
+  <h3 class="project-title">European Heat Waves</h3>
+</div>
+
+<div class="project-item" onclick="openProject(3)">
+  <div class="icon-circle">
+    <img src="img\icons\1 (6).png" alt="New Zealand Snow Cover Decline" class="custom-icon">
+  </div>
+  <h3 class="project-title">4. New Zealand Snow Cover Decline</h3>
+</div>
+
+<div class="project-item" onclick="openProject(4)">
+  <div class="icon-circle">
+    <img src="img\icons\1 (7).png" alt="Cairo Black Cloud" class="custom-icon">
+  </div>
+  <h3 class="project-title">Cairo Black Cloud</h3>
+</div>
+
+<div class="project-item" onclick="openProject(5)">
+  <div class="icon-circle">
+    <img src="img\icons\1 (4).png" alt="Indian Monsoons Variability" class="custom-icon">
+  </div>
+  <h3 class="project-title">Indian Monsoons</h3>
+</div>
+
+<div class="project-item" onclick="openProject(6)">
+  <div class="icon-circle">
+    <img src="img\icons\1 (5).png" alt="Arabian Sea Phytoplankton" class="custom-icon">
+  </div>
+  <h3 class="project-title">Arabian Phytoplankton</h3>
+</div>
+
+
+    <!-- Popup Modal -->
+        <div class="modal" id="projectModal">
+              <div class="modal-content">
+                      <span class="close" onclick="closeModal()">&times;</span>
+                              <h2 id="modalTitle"></h2>
+                                      <p id="modalDescription"></p>
+                                              <div class="modal-buttons">
+                                                        <button onclick="prevProject()">⬅ Prev</button>
+                                                                  <button onclick="nextProject()">Next ➡</button>
+                                                                            <a id="modalLink" href="#" target="_blank">
+                                                                                        <button class="google-btn">🌍 Open in Google Earth Engine</button>
+                                                                                              </a>
+                                                                                                    </div>
+                                                                                                          </div>
+                                                                                                                </div>
+
+    <style>
+      .apps-title {
+        text-align: center;
+        font-size: 2.5rem;
+        margin-bottom: 50px;
+        text-transform: uppercase;
+        color: #00eaff;
+        text-shadow: 0 0 10px #00eaff, 0 0 20px #00eaff;
+      }
+
+      .apps-container {
+        position: relative;
+        width: 100%;
+        height: 700px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      /* الكرة المركزية */
+      .central-orb {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 220px;
+        height: 220px;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        box-shadow: 0 0 40px rgba(0,234,255,0.8);
+      }
+
+      .earth-icon {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        animation: spinEarth 60s linear infinite;
+      }
+
+      @keyframes spinEarth {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+
+      /* عناصر الابلكيشن */
+      .project-item {
+        position: absolute;
+        text-align: center;
+        width: 140px;
+        transform: translate(-50%, -50%);
+        cursor: pointer;
+      }
+
+      .icon-circle {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto 10px;
+        border-radius: 50%;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 25px rgba(0,234,255,0.6);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .project-item:hover .icon-circle {
+        transform: scale(1.1);
+        box-shadow: 0 0 40px rgba(255,0,60,0.7);
+      }
+
+      .custom-icon {
+        width: 60px;
+        height: 60px;
+        transition: transform 0.3s ease;
+      }
+
+      .project-item:hover .custom-icon {
+        transform: scale(1.15);
+      }
+
+      .project-title {
+        font-size: 1rem;
+        color: #00eaff;
+        font-weight: bold;
+      }
+
+      .project-item:hover .project-title {
+        color: #ff003c;
+        text-shadow: 0 0 8px #ff003c;
+      }
+
+      /* الخطوط */
+      .connection-line {
+        position: absolute;
+        height: 2px;
+        background: linear-gradient(90deg, #00eaff, #ff003c);
+        transform-origin: left center;
+        opacity: 0.6;
+        z-index: -1;
+      }
+
+      /* Popup Modal */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-content {
+        background: #111;
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        color: white;
+        max-width: 500px;
+        box-shadow: 0 0 20px #00eaff;
+        animation: fadeSlide 0.4s ease;
+        position: relative;
+      }
+
+      @keyframes fadeSlide {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+
+      .close {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 2rem;
+        color: white;
+        cursor: pointer;
+      }
+
+      .modal-buttons {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .modal-buttons button {
+        padding: 10px 20px;
+        border: none;
+        background: #00eaff;
+        color: black;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+
+      .modal-buttons button:hover {
+        background: #ff003c;
+        color: white;
+      }
+
+      .google-btn {
+        background: #34a853 !important;
+        color: white !important;
+      }
+    </style>
+
+ <script>
+  const projects = [
+    { 
+      title: "California Wildfires", 
+      desc: "California burns each year—how has fire intensity changed over time? Can satellites detect early signals before fires turn catastrophic? What role do climate shifts play in fueling these mega-fires?",
+      link: "https://sherif-shallal.users.earthengine.app/view/nasaterramodisfirescalifornia" 
+    },
+    { 
+      title: "Amazon Deforestation", 
+      desc: "The lungs of our planet are shrinking—how fast is the Amazon disappearing? Can satellite eyes reveal hidden patterns of deforestation? What if you could track forest loss in real time—would you act differently?",
+      link: "https://sherif-shallal.users.earthengine.app/view/nasaterramodisndviamazon" 
+    },
+    { 
+      title: "European Heat Waves", 
+      desc: "Europe is heating faster than expected—but how extreme are the changes? Can data from space help us measure the human cost of rising heat? What would a future summer in Europe look like if trends continue?",
+      link: "https://sherif-shallal.users.earthengine.app/view/nasaterramodislsteurope" 
+    },
+    { 
+      title: "New Zealand Snow Cover Decline", 
+      desc: "The white peaks of New Zealand are fading—how quickly is snow retreating? What does shrinking snow cover mean for water, wildlife, and tourism? Can long-term satellite monitoring help predict a snowless future?",
+      link: "https://sherif-shallal.users.earthengine.app/view/nasaterramodissnownz" 
+    },
+    { 
+      title: "Cairo Black Cloud", 
+      desc: "Each autumn, Cairo’s skies turn dark—what’s behind this “black cloud”? Can space-based data untangle the mix of pollution sources? What solutions emerge when we map air quality from above?",
+      link: "https://sherif-shallal.users.earthengine.app/view/nasaterramodisaodcairo" 
+    },
+    { 
+      title: "Indian Monsoons Variability", 
+      desc: "India’s lifeline, the monsoon, is becoming unpredictable—how variable is it? How do shifts in rainfall impact farmers and food security? Could satellite-driven forecasts help communities prepare better?",
+      link: "https://sherif-shallal.users.earthengine.app/view/nasaterramodiscloudsindia" 
+    },
+    { 
+      title: "Arabian Sea Phytoplankton", 
+      desc: "Tiny organisms, massive impact—how is phytoplankton reshaping the Arabian Sea? What do blooms mean for fisheries, carbon cycles, and climate? How can satellite monitoring reveal invisible changes beneath the waves?",
+      link: "https://sherif-shallal.users.earthengine.app/view/nasaterramodischlorophyllaarabiansea" 
+    }
+  ];
+
+  let currentProject = 0;
+  let animationRunning = true;
+  let angleOffset = 0;
+
+  function openProject(index) {
+    currentProject = index;
+    document.getElementById("modalTitle").innerText = projects[index].title;
+    document.getElementById("modalDescription").innerText = projects[index].desc;
+    document.getElementById("modalLink").href = projects[index].link;
+    document.getElementById("projectModal").style.display = "flex";
+  }
+
+  function closeModal() {
+    document.getElementById("projectModal").style.display = "none";
+  }
+
+  function nextProject() {
+    currentProject = (currentProject + 1) % projects.length;
+    openProject(currentProject);
+  }
+
+  function prevProject() {
+    currentProject = (currentProject - 1 + projects.length) % projects.length;
+    openProject(currentProject);
+  }
+
+  function positionApps() {
+    const container = document.querySelector(".apps-container");
+    const center = container.querySelector(".central-orb");
+    const apps = container.querySelectorAll(".project-item");
+
+    const rect = container.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const radius = 280;
+
+    container.querySelectorAll(".connection-line").forEach(el => el.remove());
+
+    apps.forEach((app, i) => {
+      const angle = angleOffset + (i / apps.length) * (2 * Math.PI);
+      const x = centerX + radius * Math.cos(angle);
+      const y = centerY + radius * Math.sin(angle);
+
+      app.style.left = x + "px";
+      app.style.top = y + "px";
+
+      const line = document.createElement("div");
+      line.className = "connection-line";
+
+      const dx = x - centerX;
+      const dy = y - centerY;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      const angleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
+
+      line.style.width = length + "px";
+      line.style.left = centerX + "px";
+      line.style.top = centerY + "px";
+      line.style.transform = `rotate(${angleDeg}deg)`;
+
+      container.appendChild(line);
+    });
+  }
+
+  function animate() {
+    if (animationRunning) {
+      angleOffset += 0.002;
+      positionApps();
+    }
+    requestAnimationFrame(animate);
+  }
+
+  window.addEventListener("load", () => {
+    positionApps();
+    animate();
+
+    const apps = document.querySelectorAll(".project-item");
+    const container = document.querySelector(".apps-container");
+
+    apps.forEach(app => {
+      app.addEventListener("mouseenter", () => {
+        animationRunning = false;
+        container.classList.add("paused");
+      });
+      app.addEventListener("mouseleave", () => {
+        animationRunning = true;
+        container.classList.remove("paused");
+      });
+    });
+  });
+
+  window.addEventListener("resize", positionApps);
+</script>
+  </div>
+</li>
+
+
+          <li class="l-section section">
+            <div class="about">
+              <div class="about--banner">
+                  <span>
+                    <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 150 118" style="enable-background:new 0 0 150 118;" xml:space="preserve">
+                    <g transform="translate(0.000000,118.000000) scale(0.100000,-0.100000)">
+                      <path d="M870,1167c-34-17-55-57-46-90c3-15,81-100,194-211l187-185l-565-1c-431,0-571-3-590-13c-55-28-64-94-18-137c21-20,33-20,597-20h575l-192-193C800,103,794,94,849,39c20-20,39-29,61-29c28,0,63,30,298,262c147,144,272,271,279,282c30,51,23,60-219,304C947,1180,926,1196,870,1167z"/>
+                    </g>
+                    </svg>
+                  </span>
+                </a>
+                </a>
+              </div>
+
+              <!-- Team Members Section -->
+              <div class="team-section">
+                <h2>Our Team Members</h2>
+                <div class="team-members">
+                  <div class="team-member">
+                    <img src="img\Team\shrif.jpeg" alt="Sherif Mohamed" class="member-avatar">
+                    <div class="member-name">Sherif Mohamed Kamal Shallal</div>
+                    <div class="member-role">Team Leader</div>
+                    <div class="member-username">@shefoshello2025</div>
+                    <div class="member-country">Egypt</div>
+                    <div class="member-social">
+                      <a href="YOUR_FACEBOOK_LINK" title="Facebook">FB</a>
+                      <a href="mailto:YOUR_EMAIL" title="Email">Email</a>
+                      <a href="tel:YOUR_PHONE" title="Phone">Phone</a>
+                    </div>
+                  </div>
+                  <div class="team-member">
+                    <img src="img/Team/michael.jpg" alt="Michael Nagy" class="member-avatar">
+                    <div class="member-name">Michael Nagy Riad Kamel</div>
+                    <div class="member-role">Team Member</div>
+                    <div class="member-username">@michaelnagy199</div>
+                    <div class="member-country">Egypt</div>
+                    <div class="member-social">
+                      <a href="YOUR_FACEBOOK_LINK" title="Facebook">FB</a>
+                      <a href="mailto:YOUR_EMAIL" title="Email">Email</a>
+                      <a href="tel:YOUR_PHONE" title="Phone">Phone</a>
+                    </div>
+                  </div>
+                  <div class="team-member">
+                    <img src="img\Team\rania.jpeg" alt="Rania Hassan" class="member-avatar">
+                    <div class="member-name">Rania Hassan AlHossainy</div>
+                    <div class="member-role">Team Member</div>
+                    <div class="member-username">@rania_hassan</div>
+                    <div class="member-country">Egypt</div>
+                    <div class="member-social">
+                      <a href="YOUR_FACEBOOK_LINK" title="Facebook">FB</a>
+                      <a href="mailto:YOUR_EMAIL" title="Email">Email</a>
+                      <a href="tel:YOUR_PHONE" title="Phone">Phone</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li class="l-section section">
+            <div class="contact">
+              <div class="contact--lockup">
+                <div class="modal" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px;">
+                  <div class="contact-map" style="flex: 1; min-width: 200px;">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d7275360.126908513!2d25.6628999!3d26.820553!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14368976c35f6b3d%3A0xc1b7e3c6c6d5d48b!2sEgypt!5e0!3m2!1sen!2sus!4v1727960000000!5m2!1sen!2sus" width="300" height="250" style="border:0; width: 100%;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                  </div>
+                  <div style="flex: 1; min-width: 300px; text-align: center;">
+                    <div class="modal--information">
+                      <p>Egypt</p>
+                      <a href="mailto:sherif_welcome@yahoo.com">sherif_welcome@yahoo.com</a>
+                      <a href="tel:+01120855004">+20 112 085 5004</a>
+                    </div>
+                    <h2>Contact Us</h2>
+                    <form class="contact-form" action="mailto:earthskyteam@nasa.gov" method="post" enctype="text/plain">
+                      <label for="name">Name:</label>
+                      <input type="text" id="name" name="name" required placeholder="Your Name">
+                      <label for="email">Email:</label>
+                      <input type="email" id="email" name="email" required placeholder="Your Email">
+                      <label for="subject">Subject:</label>
+                      <input type="text" id="subject" name="subject" required placeholder="Subject">
+                      <label for="message">Message:</label>
+                      <textarea id="message" name="message" required placeholder="Your Message"></textarea>
+                      <input type="submit" value="Send Message">
+                    </form>
+                    <ul class="modal--options">
+                      <li><a href="https://www.spaceappschallenge.org/2025/find-a-team/earth-sky/?tab=members">NASA Cairo</a></li>
+                      <li><a href="https://www.spaceappschallenge.org/2025/find-a-team/earth-sky/">Space Apps</a></li>                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li class="l-section section">
+            <div class="hire">
+              <h2>Join Our Earth Mission</h2>
+              <form class="work-request">
+                <div class="work-request--options">
+                  <span class="options-a">
+                    <input id="opt-1" type="checkbox" value="data analysis">
+                    <label for="opt-1">
+                      <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                      viewBox="0 0 150 111" style="enable-background:new 0 0 150 111;" xml:space="preserve">
+                      <g transform="translate(0.000000,111.000000) scale(0.100000,-0.100000)">
+                        <path d="M950,705L555,310L360,505C253,612,160,700,155,700c-6,0-44-34-85-75l-75-75l278-278L550-5l475,475c261,261,475,480,475,485c0,13-132,145-145,145C1349,1100,1167,922,950,705z"/>
+                      </g>
+                      </svg>
+                      Data Analysis
+                    </label>
+                    <input id="opt-2" type="checkbox" value="remote sensing">
+                    <label for="opt-2">
+                      <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                      viewBox="0 0 150 111" style="enable-background:new 0 0 150 111;" xml:space="preserve">
+                      <g transform="translate(0.000000,111.000000) scale(0.100000,-0.100000)">
+                        <path d="M950,705L555,310L360,505C253,612,160,700,155,700c-6,0-44-34-85-75l-75-75l278-278L550-5l475,475c261,261,475,480,475,485c0,13-132,145-145,145C1349,1100,1167,922,950,705z"/>
+                      </g>
+                      </svg>
+                      Remote Sensing
+                    </label>
+                    <input id="opt-3" type="checkbox" value="programming">
+                    <label for="opt-3">
+                      <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                      viewBox="0 0 150 111" style="enable-background:new 0 0 150 111;" xml:space="preserve">
+                      <g transform="translate(0.000000,111.000000) scale(0.100000,-0.100000)">
+                        <path d="M950,705L555,310L360,505C253,612,160,700,155,700c-6,0-44-34-85-75l-75-75l278-278L550-5l475,475c261,261,475,480,475,485c0,13-132,145-145,145C1349,1100,1167,922,950,705z"/>
+                      </g>
+                      </svg>
+                      Programming
+                    </label>
+                  </span>
+                  <span class="options-b">
+                    <input id="opt-4" type="checkbox" value="climate research">
+                    <label for="opt-4">
+                      <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                      viewBox="0 0 150 111" style="enable-background:new 0 0 150 111;" xml:space="preserve">
+                      <g transform="translate(0.000000,111.000000) scale(0.100000,-0.100000)">
+                        <path d="M950,705L555,310L360,505C253,612,160,700,155,700c-6,0-44-34-85-75l-75-75l278-278L550-5l475,475c261,261,475,480,475,485c0,13-132,145-145,145C1349,1100,1167,922,950,705z"/>
+                      </g>
+                      </svg>
+                      Climate Research
+                    </label>
+                    <input id="opt-5" type="checkbox" value="gis mapping">
+                    <label for="opt-5">
+                      <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                      viewBox="0 0 150 111" style="enable-background:new 0 0 150 111;" xml:space="preserve">
+                      <g transform="translate(0.000000,111.000000) scale(0.100000,-0.100000)">
+                        <path d="M950,705L555,310L360,505C253,612,160,700,155,700c-6,0-44-34-85-75l-75-75l278-278L550-5l475,475c261,261,475,480,475,485c0,13-132,145-145,145C1349,1100,1167,922,950,705z"/>
+                      </g>
+                      </svg>
+                      GIS Mapping
+                    </label>
+                    <input id="opt-6" type="checkbox" value="environmental science">
+                    <label for="opt-6">
+                      <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                      viewBox="0 0 150 111" style="enable-background:new 0 0 150 111;" xml:space="preserve">
+                      <g transform="translate(0.000000,111.000000) scale(0.100000,-0.100000)">
+                        <path d="M950,705L555,310L360,505C253,612,160,700,155,700c-6,0-44-34-85-75l-75-75l278-278L550-5l475,475c261,261,475,480,475,485c0,13-132,145-145,145C1349,1100,1167,922,950,705z"/>
+                      </g>
+                      </svg>
+                      Environmental Science
+                    </label>
+                  </span>
+                </div>
+                <div class="work-request--information">
+                  <div class="information-name">
+                    <input id="name" type="text" spellcheck="false">
+                    <label for="name">Name</label>
+                  </div>
+                  <div class="information-email">
+                    <input id="email" type="email" spellcheck="false">
+                    <label for="email">Email</label>
+                  </div>
+                </div>
+                <input type="submit" value="Join Mission">
+              </form>
+            </div>
+          </li>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="assets/js/vendor/jquery-2.2.4.min.js"><\/script>')</script>
+<script src="assets/js/functions-min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 3D Globe Script for Home
+    const container = document.getElementById('globe-container');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setClearColor(0x000000, 0); // Transparent background
+    container.appendChild(renderer.domElement);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+    const pointLight = new THREE.PointLight(0xffffff, 1);
+    pointLight.position.set(10, 10, 10);
+    scene.add(pointLight);
+
+    const geometry = new THREE.SphereGeometry(5, 64, 64);
+    const texture = new THREE.TextureLoader().load('https://www.solarsystemscope.com/textures/download/8k_earth_daymap.jpg');
+    const material = new THREE.MeshPhongMaterial({ map: texture, shininess: 50 });
+    const earth = new THREE.Mesh(geometry, material);
+    scene.add(earth);
+
+    camera.position.z = 10;
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      earth.rotation.y += 0.001; // Auto-rotate
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Add markers
+    function latLongToVector3(lat, lon, radius) {
+      const phi = Math.PI / 2 - lat * Math.PI / 180;
+      const theta = (lon + 180) * Math.PI / 180;
+      return new THREE.Vector3(
+        radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.cos(phi),
+        radius * Math.sin(phi) * Math.sin(theta)
+      );
+    }
+
+    function addMarker(lat, lon, color) {
+      const markerGeo = new THREE.SphereGeometry(0.1, 16, 16);
+      const markerMat = new THREE.MeshBasicMaterial({ color: color });
+      const marker = new THREE.Mesh(markerGeo, markerMat);
+      const pos = latLongToVector3(lat, lon, 5.05); // Slightly above surface
+      marker.position.copy(pos);
+      scene.add(marker);
+    }
+
+    // Sample markers
+    addMarker(-3, -60, 0xff0000); // Fires: Amazon - red
+    addMarker(30, 31, 0x0000ff); // Floods: Nile, Egypt - blue
+    addMarker(80, 0, 0x00ff00); // Climate change: Arctic - green
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    });
+  });
+</script>
+<script>
+  // Particles.js configuration
+  particlesJS('particles-js', {
+    "particles": {
+      "number": {
+        "value": 80,
+        "density": {
+          "enable": true,
+          "value_area": 800
+        }
+      },
+      "color": {
+        "value": "#ffffff"
+      },
+      "shape": {
+        "type": "circle",
+        "stroke": {
+          "width": 0,
+          "color": "#000000"
+        },
+        "polygon": {
+          "nb_sides": 5
+        }
+      },
+      "opacity": {
+        "value": 0.5,
+        "random": false,
+        "anim": {
+          "enable": false,
+          "speed": 1,
+          "opacity_min": 0.1,
+          "sync": false
+        }
+      },
+      "size": {
+        "value": 3,
+        "random": true,
+        "anim": {
+          "enable": false,
+          "speed": 40,
+          "size_min": 0.1,
+          "sync": false
+        }
+      },
+      "line_linked": {
+        "enable": true,
+        "distance": 150,
+        "color": "#ffffff",
+        "opacity": 0.4,
+        "width": 1
+      },
+      "move": {
+        "enable": true,
+        "speed": 6,
+        "direction": "none",
+        "random": false,
+        "straight": false,
+        "out_mode": "out",
+        "bounce": false,
+        "attract": {
+          "enable": false,
+          "rotateX": 600,
+          "rotateY": 1200
+        }
+      }
+    },
+    "interactivity": {
+      "detect_on": "canvas",
+      "events": {
+        "onhover": {
+          "enable": true,
+          "mode": "repulse"
+        },
+        "onclick": {
+          "enable": true,
+          "mode": "push"
+        },
+        "resize": true
+      },
+      "modes": {
+        "grab": {
+          "distance": 400,
+          "line_linked": {
+            "opacity": 1
+          }
+        },
+        "bubble": {
+          "distance": 400,
+          "size": 40,
+          "duration": 2,
+          "opacity": 8,
+          "speed": 3
+        },
+        "repulse": {
+          "distance": 200,
+          "duration": 0.4
+        },
+        "push": {
+          "particles_nb": 4
+        },
+        "remove": {
+          "particles_nb": 2
+        }
+      }
+    },
+    "retina_detect": true
+  });
+</script>
+<script>
+  // Rocket Navigation Script
+  function updateRocketPosition() {
+    const activeLi = document.querySelector('.side-nav li.is-active');
+    if (activeLi) {
+      const rect = activeLi.getBoundingClientRect();
+      const navRect = document.querySelector('.side-nav').getBoundingClientRect();
+      const top = rect.top - navRect.top + (rect.height / 2) - 10; // Adjust for rocket size
+      document.getElementById('rocket').style.top = `${top}px`;
+    }
+  }
+
+  // Initial position
+  updateRocketPosition();
+
+  // Observe changes
+  const observer = new MutationObserver(updateRocketPosition);
+  observer.observe(document.querySelector('.side-nav ul'), { childList: true, subtree: true, attributes: true });
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Earth Sky Team - Chatbot</title>
+  <style>
+    /* 🌌 Chatbot Styles - Enhanced */
+    #chatbot-icon {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      background: linear-gradient(135deg, #001f4d, #b30000);
+      color: #fff;
+      border-radius: 50%;
+      width: 70px;
+      height: 70px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 32px;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      z-index: 9999;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    #chatbot-icon:hover {
+      transform: scale(1.15) translateY(-5px);
+      box-shadow: 0 0 30px #00eaff, 0 0 50px #ff003c;
+    }
+
+    #chatbot-window {
+      position: fixed;
+      bottom: 110px;
+      right: 25px;
+      width: 380px;
+      height: 520px;
+      background: white;
+      border: 2px solid #00eaff;
+      border-radius: 14px;
+      display: none;
+      flex-direction: column;
+      box-shadow: 0 0 25px #00eaff, 0 0 50px #ff003c;
+      overflow: hidden;
+      z-index: 10000;
+      font-family: "Segoe UI", Arial, sans-serif;
+      animation: slideUp 0.5s ease;
+    }
+
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #chatbot-header {
+      background: linear-gradient(90deg, #001f4d, #003366);
+      color: white;
+      padding: 12px;
+      font-weight: bold;
+      font-size: 16px;
+      text-align: center;
+      border-bottom: 1px solid #00eaff;
+      position: relative;
+      letter-spacing: 1px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    #close-bot {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      cursor: pointer;
+      font-size: 18px;
+      transition: transform 0.3s ease;
+    }
+    
+    #close-bot:hover {
+      transform: scale(1.2);
+      color: #ff003c;
+    }
+
+    #chatbot-messages {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      font-size: 15px;
+      color: #333;
+      background: white;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(0, 234, 255, 0.05) 0%, transparent 20%),
+        radial-gradient(circle at 90% 80%, rgba(255, 0, 60, 0.05) 0%, transparent 20%);
+    }
+    
+    #chatbot-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    #chatbot-messages::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    
+    #chatbot-messages::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #001f4d, #003366);
+      border-radius: 10px;
+    }
+    
+    #chatbot-messages div {
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      max-width: 80%;
+      word-wrap: break-word;
+      line-height: 1.4;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+    }
+    
+    #chatbot-messages div:hover {
+      transform: translateY(-2px);
+    }
+    
+    .bot {
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+      border-left: 3px solid #00eaff;
+      text-align: left;
+      color: #333;
+      animation: fadeIn 0.5s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .bot::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 234, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    .bot:hover::before {
+      left: 100%;
+    }
+    
+    .user {
+      background: linear-gradient(135deg, #ffebee, #ffcdd2);
+      border-right: 3px solid #ff003c;
+      text-align: right;
+      margin-left: auto;
+      color: #333;
+      animation: slideInRight 0.5s ease;
+    }
+    
+    .suggestion {
+      background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+      border: 1px solid #4caf50;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #333;
+      animation: pulse 2s infinite;
+    }
+    
+    .suggestion:hover {
+      background: linear-gradient(135deg, #c8e6c9, #a5d6a7);
+      transform: scale(1.02);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); }
+      50% { box-shadow: 0 0 15px rgba(76, 175, 80, 0.8); }
+    }
+
+    #chatbot-input-container {
+      display: flex;
+      border-top: 1px solid #00eaff;
+      background: white;
+      padding: 5px;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+    
+    #chatbot-input {
+      border: none;
+      padding: 14px;
+      width: 100%;
+      outline: none;
+      font-size: 15px;
+      background: rgb(0, 0, 0);
+      color: #333;
+      border-radius: 8px;
+      margin: 5px;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+      transition: box-shadow 0.3s ease;
+    }
+    
+    #chatbot-input:focus {
+      box-shadow: inset 0 0 8px rgba(0, 234, 255, 0.5);
+    }
+    
+    #chatbot-send {
+      background: linear-gradient(135deg, #001f4d, #003366);
+      color: white;
+      border: none;
+      padding: 0 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 8px;
+      margin: 5px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    #chatbot-send:hover {
+      background: linear-gradient(135deg, #003366, #004b93);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    #suggested-questions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      padding: 10px;
+      background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+      border-top: 1px solid #00eaff;
+      border-bottom: 1px solid #00eaff;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+    
+    .question-btn {
+      background: linear-gradient(135deg, #001f4d, #003366);
+      color: white;
+      border: 1px solid #00eaff;
+      border-radius: 15px;
+      padding: 5px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .question-btn:hover {
+      background: linear-gradient(135deg, #003366, #004b93);
+      transform: scale(1.05) translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .typing-indicator {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+      border: 1px solid #00eaff;
+      color: #333;
+      animation: fadeIn 0.5s ease;
+    }
+    
+    .typing-dots {
+      display: inline-block;
+      margin-left: 5px;
+    }
+    
+    .typing-dots span {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #001f4d;
+      margin: 0 2px;
+      animation: typing 1.4s infinite ease-in-out;
+    }
+    
+    .typing-dots span:nth-child(1) { animation-delay: 0s; }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-5px); }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideInRight {
+      from { 
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Neon glow effect for the entire chatbot */
+    #chatbot-window::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #00eaff, #ff003c, #00eaff);
+      border-radius: 16px;
+      z-index: -1;
+      animation: neonGlow 3s linear infinite;
+      opacity: 0.7;
+    }
+    
+    @keyframes neonGlow {
+      0%, 100% { 
+        filter: blur(5px);
+        opacity: 0.7;
+      }
+      50% { 
+        filter: blur(8px);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 🚀 MIKI AI Chatbot -->
+  <div id="chatbot-icon">👨‍🚀</div>
+
+  <div id="chatbot-window">
+    <div id="chatbot-header">
+      <span>MIKI AI Assistant</span>
+      <span id="close-bot">✖</span>
+    </div>
+    <div id="chatbot-messages"></div>
+    <div id="suggested-questions"></div>
+    <div id="chatbot-input-container">
+      <input type="text" id="chatbot-input" placeholder="Ask me something..." />
+      <button id="chatbot-send">Send</button>
+    </div>
+  </div>
+
+  <script>
+    // 🚀 MIKI AI Chatbot - Enhanced Version
+    const chatbotIcon = document.getElementById("chatbot-icon");
+    const chatbotWindow = document.getElementById("chatbot-window");
+    const closeBot = document.getElementById("close-bot");
+    const chatbotMessages = document.getElementById("chatbot-messages");
+    const chatbotInput = document.getElementById("chatbot-input");
+    const chatbotSend = document.getElementById("chatbot-send");
+    const suggestedQuestions = document.getElementById("suggested-questions");
+
+    // Show/Hide bot
+    chatbotIcon.onclick = () => {
+      chatbotWindow.style.display = "flex";
+      addWelcomeMessage();
+    };
+    closeBot.onclick = () => chatbotWindow.style.display = "none";
+
+    // Initialize bot with welcome message
+    function addWelcomeMessage() {
+      if (chatbotMessages.children.length === 0) {
+        addMessage("👋 Welcome! I'm MIKI, the AI assistant for the Earth Sky team. I can help you with information about our environmental monitoring projects. What would you like to know?", "bot");
+        showSuggestedQuestions();
+      }
+    }
+
+    // Suggested questions
+    const suggestedTopics = [
+      "Amazon Deforestation",
+      "European Heat Waves", 
+      "California Wildfires",
+      "New Zealand Snow Cover",
+      "Cairo Air Pollution",
+      "Indian Monsoon",
+      "Arabian Sea Phytoplankton"
+    ];
+
+    function showSuggestedQuestions() {
+      suggestedQuestions.innerHTML = "";
+      suggestedTopics.forEach(topic => {
+        const btn = document.createElement("button");
+        btn.className = "question-btn";
+        btn.textContent = topic;
+        btn.onclick = () => {
+          chatbotInput.value = topic;
+          sendMessage();
+        };
+        suggestedQuestions.appendChild(btn);
+      });
+    }
+
+    // Extended bot knowledge base
+    const botKnowledge = {
+      // General greetings
+      "hello": "👋 Welcome! I'm MIKI, the AI assistant for the Earth Sky team. Ask me about any of our environmental monitoring projects 🚀",
+      "hi": "👋 Welcome! I'm MIKI, the AI assistant for the Earth Sky team. Ask me about any of our environmental monitoring projects 🚀",
+      "hey": "👋 Welcome! I'm MIKI, the AI assistant for the Earth Sky team. Ask me about any of our environmental monitoring projects 🚀",
+      
+      // Project information
+      "fire watch": "🔥 Fire Watch uses satellite images to detect forest fires with high accuracy and warn the relevant teams. We utilize Terra MODIS thermal anomalies for early detection and monitoring.",
+      "flood alert": "🌊 Flood Alert analyzes weather data and river levels to predict floods and alert residents early. Our system integrates satellite data with ground sensors for comprehensive monitoring.",
+      "climate tracker": "🌍 Climate Tracker monitors climate changes in real-time using NASA data. We track temperature anomalies, precipitation patterns, and other climate indicators globally.",
+      "satellite view": "🛰️ Satellite View provides interactive images of Earth and advanced data analysis. We use multiple satellite sources including Terra MODIS for comprehensive Earth observation.",
+      "air quality": "🌫️ Air Quality measures air quality and monitors pollution using satellite data. Our system tracks particulate matter, aerosols, and other pollutants globally.",
+      
+      // Extended topics with detailed information
+      "amazon deforestation": "🌳 Amazon Deforestation Monitoring: We use Terra MODIS and NDVI analysis on Google Earth Engine to track forest loss in the Amazon. Our system monitors deforestation rates, land use changes, and carbon emissions from rainforest degradation. We also track reforestation efforts and biodiversity impacts.",
+      
+      "european heat waves": "🌡️ European Heat Waves: Our monitoring system uses Terra MODIS Land Surface Temperature (LST) data to analyze heat waves across Europe. We track temperature anomalies, urban heat island effects, and climate change impacts. Our data helps in heat stress management and environmental resilience planning.",
+      
+      "california wildfires": "🔥 California Wildfires: We monitor wildfire activity using Terra MODIS thermal anomalies and hotspot analysis. Our system tracks fire trends, vegetation dryness, and provides early warnings. We also analyze climate-induced fire patterns and provides support for fire management strategies.",
+      
+      "new zealand snow cover": "🏔️ New Zealand Snow Cover Decline: Using Terra MODIS reflectance data, we monitor snow retreat in New Zealand's alpine regions. Our analysis covers snow loss patterns, glacier melt, and impacts on water resources. This helps in understanding cryosphere changes and hydrological impacts.",
+      
+      "cairo air pollution": "🌫️ Cairo Black Cloud (Air Pollution): We monitor air quality in Cairo using Terra MODIS Aerosol Optical Depth (AOD) data. Our system tracks pollution sources including agricultural waste burning and urban emissions. We analyze particulate matter levels and support environmental management efforts.",
+      
+      "indian monsoon": "🌧️ Indian Monsoon Variability: Our system monitors monsoon patterns using Terra MODIS rainfall data and vegetation indices. We track precipitation anomalies, agricultural drought risks, and provides climate adaptation needs. Our analysis supports food security planning and climate resilience.",
+      
+      "arabian sea phytoplankton": "🌊 Arabian Sea Phytoplankton Blooms: We monitor marine ecosystems using Terra MODIS ocean color data to track chlorophyll-a concentrations. Our system detects algal blooms, analyzes primary productivity, and assesses impacts on fisheries. We also study nutrient runoff effects and carbon cycle implications."
+    };
+
+    // Keyword mapping for intelligent responses
+    const keywordMapping = {
+      "amazon": "amazon deforestation",
+      "deforestation": "amazon deforestation",
+      "forest": "amazon deforestation",
+      "heat": "european heat waves",
+      "temperature": "european heat waves",
+      "wildfire": "california wildfires",
+      "fire": "california wildfires",
+      "snow": "new zealand snow cover",
+      "alpine": "new zealand snow cover",
+      "cairo": "cairo air pollution",
+      "pollution": "cairo air pollution",
+      "smog": "cairo air pollution",
+      "monsoon": "indian monsoon",
+      "rain": "indian monsoon",
+      "phytoplankton": "arabian sea phytoplankton",
+      "algae": "arabian sea phytoplankton",
+      "bloom": "arabian sea phytoplankton"
+    };
+
+    // Function to add messages to chat
+    function addMessage(text, sender, speak = false) {
+      const msg = document.createElement("div");
+      msg.className = sender;
+      msg.innerText = text;
+      chatbotMessages.appendChild(msg);
+      chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+
+      // 🎙️ If bot responds → Read aloud
+      if (speak && sender === "bot") {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "en"; 
+        utterance.rate = 1;    
+        utterance.pitch = 1;   
+        speechSynthesis.speak(utterance);
+      }
+    }
+
+    // Function to show typing indicator
+    function showTypingIndicator() {
+      const typingDiv = document.createElement("div");
+      typingDiv.className = "typing-indicator";
+      typingDiv.id = "typing-indicator";
+      
+      const typingText = document.createElement("span");
+      typingText.textContent = "MIKI is typing";
+      
+      const typingDots = document.createElement("div");
+      typingDots.className = "typing-dots";
+      typingDots.innerHTML = '<span></span><span></span><span></span>';
+      
+      typingDiv.appendChild(typingText);
+      typingDiv.appendChild(typingDots);
+      chatbotMessages.appendChild(typingDiv);
+      chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+    }
+
+    // Function to hide typing indicator
+    function hideTypingIndicator() {
+      const typingIndicator = document.getElementById("typing-indicator");
+      if (typingIndicator) {
+        typingIndicator.remove();
+      }
+    }
+
+    // Function to find the best matching topic
+    function findMatchingTopic(userText) {
+      const lowerText = userText.toLowerCase();
+      
+      // First, check for exact matches
+      for (let key in botKnowledge) {
+        if (lowerText.includes(key.toLowerCase())) {
+          return { topic: key, confidence: "exact" };
+        }
+      }
+      
+      // Then, check for keyword matches
+      for (let keyword in keywordMapping) {
+        if (lowerText.includes(keyword.toLowerCase())) {
+          return { topic: keywordMapping[keyword], confidence: "keyword" };
+        }
+      }
+      
+      return null;
+    }
+
+    // Function to send message
+    function sendMessage() {
+      const userText = chatbotInput.value.trim();
+      if (userText === "") return;
+      
+      addMessage(userText, "user");
+      chatbotInput.value = "";
+      
+      // Show typing indicator
+      showTypingIndicator();
+      
+      // Simulate processing delay
+      setTimeout(() => {
+        hideTypingIndicator();
+        
+        const match = findMatchingTopic(userText);
+        let reply;
+        
+        if (match) {
+          if (match.confidence === "keyword") {
+            // Ask for confirmation if it's a keyword match
+            const confirmMsg = `Did you mean "${match.topic}"?`;
+            addMessage(confirmMsg, "bot");
+            
+            // Add suggestion buttons
+            const suggestionYes = document.createElement("div");
+            suggestionYes.className = "suggestion";
+            suggestionYes.textContent = "Yes, tell me more";
+            suggestionYes.onclick = () => {
+              addMessage("Yes, tell me more", "user");
+              showTypingIndicator();
+              setTimeout(() => {
+                hideTypingIndicator();
+                addMessage(botKnowledge[match.topic], "bot", true);
+              }, 800);
+            };
+            
+            const suggestionNo = document.createElement("div");
+            suggestionNo.className = "suggestion";
+            suggestionNo.textContent = "No, that's not what I meant";
+            suggestionNo.onclick = () => {
+              addMessage("No, that's not what I meant", "user");
+              showTypingIndicator();
+              setTimeout(() => {
+                hideTypingIndicator();
+                addMessage("I'm sorry, could you please rephrase your question? I can help you with: Amazon Deforestation, European Heat Waves, California Wildfires, New Zealand Snow Cover, Cairo Air Pollution, Indian Monsoon, or Arabian Sea Phytoplankton.", "bot");
+              }, 800);
+            };
+            
+            chatbotMessages.appendChild(suggestionYes);
+            chatbotMessages.appendChild(suggestionNo);
+            chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+            return;
+          } else {
+            // Exact match - provide direct answer
+            reply = botKnowledge[match.topic];
+          }
+        } else {
+          // No match found
+          reply = "❓ I didn't understand your question. Try asking about: Amazon Deforestation, European Heat Waves, California Wildfires, New Zealand Snow Cover, Cairo Air Pollution, Indian Monsoon, or Arabian Sea Phytoplankton.";
+        }
+        
+        addMessage(reply, "bot", true);
+      }, 1000);
+    }
+
+    // Event listeners
+    chatbotInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") {
+        sendMessage();
+      }
+    });
+
+    chatbotSend.addEventListener("click", sendMessage);
+
+    // Initialize the chatbot
+    window.onload = addWelcomeMessage;
+  </script>
+</body>
+</html>
+
+<!-- 📸 Screenshot Library -->
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title> Space Game</title>
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(-45deg, #001f3f, #003366, #660000, #111);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      font-family: Arial, sans-serif;
+      color: white;
+      text-align: center;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+   
+</head>
+<body>
+
+</body>
+</html>
